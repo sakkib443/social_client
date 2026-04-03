@@ -1,26 +1,255 @@
 @import "tailwindcss";
 
+/* ===== BuddyScript Design Variables ===== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Original Color Palette */
+  --color: #2D3748;
+  --color1: #1A202C;
+  --color2: #312000;
+  --color3: #C4C4C4;
+  --color4: #4A5568;
+  --color5: #1890FF;
+  --color6: #212121;
+  --color7: #666666;
+  --color8: #0ACF83;
+  --color9: #e8f4ff;
+  
+  /* Background Colors */
+  --bg1: #F0F2F5;
+  --bg2: #FFFFFF;
+  --bg3: #F5F5F5;
+  --bg4: #DFDFDF;
+  --bg5: #112032;
+  --bg6: #232E42;
+  
+  /* Border Colors */
+  --bcolor1: #F0F2F5;
+  --bcolor2: #F5F5F5;
+  
+  /* Box Shadows */
+  --b-shadow1: 0px 2px 8px rgba(108, 126, 147, 0.15);
+  --b-shadow2: 0px 4px 12px rgba(108, 126, 147, 0.1);
+  
+  /* Mapped Colors */
+  --color-primary: #1890FF;
+  --color-primary-hover: #40a9ff;
+  --color-primary-light: #e6f7ff;
+  --color-primary-dark: #096dd9;
+  --color-text-primary: #112032;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #F0F2F5;
+  --color-bg-tertiary: #F5F5F5;
+  --color-border-light: #e5e7eb;
+  --color-border-default: #d1d5db;
+  --color-success: #0ACF83;
+  --color-error: #ef4444;
+
+  --background: #F0F2F5;
+  --foreground: #112032;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: 'Poppins', system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ===== Base Overrides ===== */
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Poppins', system-ui, sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg3); }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+/* Force Bootstrap navbar-collapse to always show (no BS JS loaded) */
+#navbarSupportedContent,
+.navbar-collapse.collapse,
+.navbar-collapse {
+  display: flex !important;
+  flex-basis: auto !important;
+  flex-grow: 1 !important;
+  align-items: center !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+.animate-spin { animation: spin 1s linear infinite; }
+
+/* ===== React-specific additions ===== */
+/* These styles complement the original CSS (bootstrap, common, main, responsive) loaded via link tags */
+
+/* Login/Registration focus & disabled states */
+._social_login_input:focus,
+._social_registration_input:focus {
+  border-color: var(--color5);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+}
+
+._social_login_form_btn_link:disabled,
+._social_registration_form_btn_link:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Online dot for friends list */
+._online_dot {
+  width: 10px;
+  height: 10px;
+  background: var(--color8);
+  border-radius: 50%;
+  border: 2px solid #fff;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
+/* Post card image container */
+._feed_inner_timeline_image img {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* Avatar component */
+._avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 600;
+  color: #fff;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+._avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+._avatar--sm { width: 32px; height: 32px; font-size: 12px; }
+._avatar--md { width: 40px; height: 40px; font-size: 14px; }
+._avatar--lg { width: 48px; height: 48px; font-size: 16px; }
+._avatar--xl { width: 64px; height: 64px; font-size: 20px; }
+
+/* Comment section styles */
+._feed_comment_area {
+  padding: 16px 24px;
+}
+
+._feed_comment_input_area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+._feed_comment_input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--bcolor2);
+  border-radius: 24px;
+  padding: 8px 16px;
+  font-size: 14px;
+  outline: none;
+}
+
+._feed_comment_input:focus {
+  border-color: var(--color5);
+}
+
+/* Likers modal */
+._likers_modal_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+._likers_modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* Image upload preview */
+._image_preview_container {
+  position: relative;
+  margin-top: 12px;
+}
+
+._image_preview {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+._image_preview_remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Privacy selector */
+._privacy_select {
+  background: var(--bg3);
+  border: 1px solid var(--bcolor2);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Error text */
+.text-red-500 { color: var(--color-error); }
+.text-sm { font-size: 0.875rem; }
+.text-xs { font-size: 0.75rem; }
+.mt-1 { margin-top: 0.25rem; }
+
+/* Hide on mobile */
+@media (max-width: 991px) {
+  ._hide_mobile { display: none !important; }
 }
