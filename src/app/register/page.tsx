@@ -343,7 +343,7 @@ export default function RegisterPage() {
                 marginBottom: 18,
               }}
             >
-              {isSubmitting ? 'Creating account...' : 'Login now'}
+              {isSubmitting ? 'Creating account...' : 'Register'}
             </button>
           </form>
 
