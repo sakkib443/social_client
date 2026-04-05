@@ -1,118 +1,114 @@
-# SocialVillage — Frontend
+# SocialVillage — Frontend (Next.js)
 
-A modern social media application built with Next.js 16, React 19, and TypeScript. Converted from HTML/CSS design to a fully functional React application.
+A modern social media application built with **Next.js 16** and **React 19**, featuring real-time feed, post interactions, and authentication.
 
-## 🛠 Tech Stack
+## 🌐 Live URL
+**https://social-client-rho.vercel.app/**
 
-| Technology | Purpose |
-|-----------|---------|
-| **Next.js 16** | React framework (App Router) |
-| **React 19** | UI library |
-| **TypeScript** | Type safety |
-| **Axios** | HTTP client |
-| **React Hook Form + Zod** | Form handling & validation |
-| **react-hot-toast** | Toast notifications |
-| **js-cookie** | Token management |
-| **@react-oauth/google** | Google OAuth integration |
+## 📂 Repositories
+- **Frontend:** https://github.com/sakkib443/social_client
+- **Backend:** https://github.com/sakkib443/social_server
 
-## 📁 Project Structure
+---
 
+## ✅ Features Implemented
+
+### Authentication
+- JWT-based login & registration
+- Protected routes (feed accessible only when logged in)
+- Form validation with error handling
+
+### Feed Page
+- Create posts with text and/or image upload
+- Posts displayed newest first with pagination
+- Like/Unlike posts with optimistic UI updates
+- Nested comments and replies with like/unlike
+- View who liked a post, comment, or reply
+- Private posts (visible only to author) and Public posts (visible to all)
+
+### Extra Features
+- Friend request system (send, accept, reject, cancel)
+- Stories (24-hour auto-expiry)
+- Bookmark/Save posts
+- Real-time notification dropdown
+- Responsive design
+
+---
+
+## 🛠️ Tech Stack
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript
+- **Styling:** Original HTML/CSS design (preserved as provided)
+- **HTTP Client:** Axios
+- **Icons:** Lucide React
+- **Notifications:** React Hot Toast
+- **Date Formatting:** date-fns
+
+---
+
+## 🏗️ Project Structure
 ```
 src/
 ├── app/
-│   ├── login/           # Login page
-│   ├── register/        # Register page (firstName, lastName, email, password)
-│   ├── feed/            # Feed page (protected)
-│   ├── layout.tsx       # Root layout with providers
-│   ├── page.tsx         # Landing page (redirects to feed/login)
-│   └── globals.css      # Global styles (from original HTML/CSS)
+│   ├── feed/page.tsx       # Main feed page (protected)
+│   ├── login/page.tsx      # Login page
+│   ├── register/page.tsx   # Registration page
+│   └── layout.tsx          # Root layout
 ├── components/
-│   ├── feed/            # PostCard, CreatePost, CommentSection, CommentItem
-│   ├── layout/          # Navbar
-│   ├── providers/       # AuthProvider, GoogleOAuth
-│   └── ui/              # Avatar, shared components
+│   ├── feed/               # PostCard, CommentSection, CreatePost
+│   ├── layout/             # Navbar
+│   └── ui/                 # Avatar, Modal (reusable)
 ├── context/
-│   └── AuthContext.tsx   # Auth state management
+│   └── AuthContext.tsx      # Authentication state management
 ├── lib/
-│   ├── api.ts           # Axios instance with interceptors
-│   ├── auth.ts          # Auth service (login, register, Google)
-│   └── posts.ts         # Post & comment API services
+│   ├── api.ts              # Axios instance with interceptors
+│   ├── posts.ts            # Post API service
+│   ├── friends.ts          # Friend API service
+│   ├── stories.ts          # Story API service
+│   ├── bookmarks.ts        # Bookmark API service
+│   └── upload.ts           # Image upload service
 └── types/
-    └── index.ts         # TypeScript interfaces
+    └── index.ts            # TypeScript type definitions
 ```
 
-## ✨ Features Implemented
+---
 
-### Authentication
-- ✅ Register with **first name, last name, email, password**
-- ✅ Login with email & password
-- ✅ Google OAuth login
-- ✅ JWT-based authentication (stored in cookies)
-- ✅ Protected routes (auto-redirect to login)
-- ✅ Password show/hide toggle
-
-### Feed Page
-- ✅ Create posts with **text and/or image**
-- ✅ Posts displayed **newest first**
-- ✅ **Like/unlike** posts with correct state
-- ✅ **Comments** on posts
-- ✅ **Replies** to comments
-- ✅ Like/unlike comments & replies
-- ✅ View **who liked** a post, comment, or reply
-- ✅ **Private posts** (visible only to author)
-- ✅ **Public posts** (visible to everyone)
-- ✅ Delete own posts & comments
-- ✅ Pagination (Load More)
-- ✅ Loading skeletons for better UX
-
-### Design
-- ✅ Original HTML/CSS design preserved
-- ✅ Left sidebar (Explore, Suggested People, Events)
-- ✅ Right sidebar (You Might Like, Your Friends)
-- ✅ Responsive layout
-- ✅ Navbar with user avatar and logout
-
-## 🔒 Security & UX
-
-- **Auth interceptors** — Auto-attach JWT token to requests
-- **401 handling** — Auto-redirect to login on expired token
-- **Input validation** — Zod schemas on both client & server
-- **Rate limiting** — Server-side protection against abuse
-- **Toast notifications** — User feedback on all actions
-- **Loading states** — Skeletons and spinners for better UX
-
-## 🚀 Setup & Run
+## 🚀 How to Run Locally
 
 ```bash
+# Clone the repository
+git clone https://github.com/sakkib443/social_client.git
+cd social_client
+
 # Install dependencies
 npm install
 
-# Development
+# Create .env.local
+echo "NEXT_PUBLIC_API_URL=http://localhost:5000/api" > .env.local
+
+# Run development server
 npm run dev
-
-# Build
-npm run build
-
-# Production
-npm start
 ```
 
-## 🌐 Environment Variables
+Open http://localhost:3000
 
-```env
-NEXT_PUBLIC_API_URL=https://your-server-url.vercel.app/api
-```
-
-## 📦 Deployment
-
-Deployed on **Vercel** with automatic Git-based deployments.
-
-- **Live URL:** https://social-client-rho.vercel.app
+---
 
 ## 📝 Design Decisions
 
-1. **Separate Like Models** — Used `PostLike` and `CommentLike` collections instead of embedded arrays for better scalability with millions of records.
-2. **Cookie-based Token Storage** — `js-cookie` for JWT storage with 7-day expiry, accessible client-side for auth state checks.
-3. **Optional Auth Middleware** — Feed shows all public posts even for unauthenticated users, but personalized features (like state) require auth.
-4. **Cloudinary for Images** — Offloaded image storage to Cloudinary CDN for fast delivery and automatic optimization.
-5. **Vercel Serverless** — Both frontend and backend deployed on Vercel for zero-config scaling.
+1. **Original Design Preserved:** The provided HTML/CSS design was kept exactly as-is. No design changes were made — only dynamic data integration.
+
+2. **TypeScript:** Used throughout for type safety and better developer experience.
+
+3. **Optimistic Updates:** Like/unlike actions update the UI immediately before the API call completes, providing instant feedback.
+
+4. **Component Architecture:** Modular components (PostCard, CommentSection, Avatar) for reusability and maintainability.
+
+5. **Context API:** Used React Context for authentication state instead of a heavy state management library, keeping the bundle size small.
+
+---
+
+## 👤 Developer
+**Sheikh Sakibul Hasan**  
+🌐 https://www.extrainweb.com  
+💻 https://github.com/sakkib443
