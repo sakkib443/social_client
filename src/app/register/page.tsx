@@ -11,6 +11,8 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/context/AuthContext';
 
 const registerSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Please enter a valid email'),
   password: z
     .string()
@@ -55,8 +57,8 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     try {
       await registerUser({
-        firstName: data.email.split('@')[0],
-        lastName: '',
+        firstName: data.firstName,
+        lastName: data.lastName,
         email: data.email,
         password: data.password,
         confirmPassword: data.confirmPassword,
@@ -176,6 +178,44 @@ export default function RegisterPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)}>
+            {/* First Name & Last Name - side by side */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#4A5568', marginBottom: 5 }}>First Name</label>
+                <input
+                  type="text"
+                  {...register('firstName')}
+                  style={{
+                    width: '100%',
+                    height: 40,
+                    padding: '0 14px',
+                    border: errors.firstName ? '1px solid #ef4444' : '1px solid #e5e7eb',
+                    borderRadius: 6,
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+                {errors.firstName && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 3 }}>{errors.firstName.message}</p>}
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#4A5568', marginBottom: 5 }}>Last Name</label>
+                <input
+                  type="text"
+                  {...register('lastName')}
+                  style={{
+                    width: '100%',
+                    height: 40,
+                    padding: '0 14px',
+                    border: errors.lastName ? '1px solid #ef4444' : '1px solid #e5e7eb',
+                    borderRadius: 6,
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+                {errors.lastName && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 3 }}>{errors.lastName.message}</p>}
+              </div>
+            </div>
+
             <div style={{ marginBottom: 12 }}>
               <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#4A5568', marginBottom: 5 }}>Email</label>
               <input
