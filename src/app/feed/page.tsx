@@ -413,8 +413,8 @@ export default function FeedPage() {
                         {/* Your Story */}
                         <div className="col-xl-3 col-lg-3 col-md-4 col-sm-4 col">
                           <div className="_feed_inner_profile_story _b_radious6">
-                            <div className="_feed_inner_profile_story_image">
-                              <img src={user?.avatar || '/assets/images/card_ppl1.png'} alt="Image" className="_profile_story_img" style={{ width: '100%', height: 200, objectFit: 'cover' }} />
+                            <div className="_feed_inner_profile_story_image" style={{ height: 200, overflow: 'hidden', position: 'relative' }}>
+                              <img src={user?.avatar || '/assets/images/card_ppl1.png'} alt="Image" className="_profile_story_img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               <div className="_feed_inner_story_txt">
                                 <div className="_feed_inner_story_btn">
                                   <label htmlFor="story-upload" className="_feed_inner_story_btn_link" style={{ cursor: storyUploading ? 'wait' : 'pointer' }}>
@@ -434,8 +434,8 @@ export default function FeedPage() {
                         {(storyGroups.length > 0 ? storyGroups.slice(0, 3) : [null, null, null]).map((group, i) => (
                           <div key={i} className={`col-xl-3 col-lg-3 col-md-4 col-sm-4 ${i === 2 ? '_custom_none' : i === 1 ? '_custom_mobile_none' : ''} col`}>
                             <div className="_feed_inner_public_story _b_radious6" onClick={() => group && setViewingStory({ group, index: 0 })} style={{ cursor: group ? 'pointer' : 'default' }}>
-                              <div className="_feed_inner_public_story_image">
-                                <img src={group ? group.stories[0]?.imageUrl : `/assets/images/card_ppl${i + 2}.png`} alt="Image" className="_public_story_img" style={{ width: '100%', height: 200, objectFit: 'cover' }} />
+                              <div className="_feed_inner_public_story_image" style={{ height: 200, overflow: 'hidden', position: 'relative' }}>
+                                <img src={group ? group.stories[0]?.imageUrl : `/assets/images/card_ppl${i + 2}.png`} alt="Image" className="_public_story_img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 <div className="_feed_inner_pulic_story_txt">
                                   <p className="_feed_inner_pulic_story_para">{group ? `${(group.author as any).firstName} ${(group.author as any).lastName}` : 'Ryan Roslansky'}</p>
                                 </div>
