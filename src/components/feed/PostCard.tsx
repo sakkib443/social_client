@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { Heart, MessageCircle, Trash2, Globe, Lock, MoreVertical, Bookmark, Bell, Edit, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Avatar, Modal } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 import { postService } from '@/lib/posts';
+import { bookmarkService } from '@/lib/bookmarks';
 import type { Post, User } from '@/types';
 import { CommentSection } from './CommentSection';
 
@@ -28,6 +28,7 @@ export function PostCard({ post, onDelete, onLikeUpdate }: PostCardProps) {
   const [loadingLikers, setLoadingLikers] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   const isAuthor = user?._id === post.author._id;
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
@@ -86,6 +87,17 @@ export function PostCard({ post, onDelete, onLikeUpdate }: PostCardProps) {
     }
   };
 
+  const handleBookmark = async () => {
+    try {
+      const result = await bookmarkService.toggleBookmark(post._id);
+      setIsBookmarked(result.bookmarked);
+      toast.success(result.bookmarked ? 'Post saved!' : 'Post unsaved');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed');
+    }
+    setShowMenu(false);
+  };
+
   const handleCommentCountChange = (delta: number) => {
     setCommentCount((prev) => prev + delta);
   };
@@ -130,42 +142,37 @@ export function PostCard({ post, onDelete, onLikeUpdate }: PostCardProps) {
             </button>
             
             {showMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg py-2 min-w-[180px] z-50 animate-fadeIn">
-                <ul className="_feed_timeline_dropdown_list">
-                  <li className="_feed_timeline_dropdown_item">
-                    <button className="_feed_timeline_dropdown_link w-full text-left">
-                      <span><Bookmark size={18} className="text-[var(--color5)]" /></span>
-                      Save Post
-                    </button>
-                  </li>
-                  <li className="_feed_timeline_dropdown_item">
-                    <button className="_feed_timeline_dropdown_link w-full text-left">
-                      <span><Bell size={18} className="text-[var(--color5)]" /></span>
-                      Turn On Notification
-                    </button>
-                  </li>
-                  {isAuthor && (
-                    <>
-                      <li className="_feed_timeline_dropdown_item">
-                        <button className="_feed_timeline_dropdown_link w-full text-left">
-                          <span><Edit size={18} className="text-[var(--color5)]" /></span>
-                          Edit Post
-                        </button>
-                      </li>
-                      <li className="_feed_timeline_dropdown_item">
-                        <button 
-                          onClick={handleDelete}
-                          disabled={isDeleting}
-                          className="_feed_timeline_dropdown_link w-full text-left text-red-500"
-                        >
-                          <span><Trash2 size={18} /></span>
-                          {isDeleting ? 'Deleting...' : 'Delete Post'}
-                        </button>
-                      </li>
-                    </>
-                  )}
-                </ul>
-              </div>
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setShowMenu(false)}></div>
+                <div className="_feed_timeline_dropdown_menu" style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: '#fff', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', padding: '8px 0', minWidth: 200, zIndex: 50 }}>
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                    <li>
+                      <button onClick={handleBookmark} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#333', textAlign: 'left' }}>
+                        <Bookmark size={18} color="#1890FF" /> {isBookmarked ? 'Unsave Post' : 'Save Post'}
+                      </button>
+                    </li>
+                    <li>
+                      <button style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#333', textAlign: 'left' }}>
+                        <Bell size={18} color="#1890FF" /> Turn On Notification
+                      </button>
+                    </li>
+                    {isAuthor && (
+                      <>
+                        <li>
+                          <button style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#333', textAlign: 'left' }}>
+                            <Edit size={18} color="#1890FF" /> Edit Post
+                          </button>
+                        </li>
+                        <li>
+                          <button onClick={handleDelete} disabled={isDeleting} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444', textAlign: 'left' }}>
+                            <Trash2 size={18} /> {isDeleting ? 'Deleting...' : 'Delete Post'}
+                          </button>
+                        </li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -180,12 +187,11 @@ export function PostCard({ post, onDelete, onLikeUpdate }: PostCardProps) {
         {/* Image */}
         {post.imageUrl && (
           <div className="_feed_inner_timeline_image">
-            <Image
+            <img
               src={post.imageUrl}
               alt="Post image"
-              width={800}
-              height={600}
-              className="_time_img object-contain max-h-[500px]"
+              className="_time_img"
+              style={{ width: '100%', maxHeight: 500, objectFit: 'contain', borderRadius: 6 }}
             />
           </div>
         )}
