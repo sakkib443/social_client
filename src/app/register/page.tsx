@@ -34,6 +34,8 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register: registerUser, googleLogin, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -194,37 +196,87 @@ export default function RegisterPage() {
 
             <div style={{ marginBottom: 12 }}>
               <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#4A5568', marginBottom: 5 }}>Password</label>
-              <input
-                type="password"
-                {...register('password')}
-                style={{
-                  width: '100%',
-                  height: 40,
-                  padding: '0 14px',
-                  border: errors.password ? '1px solid #ef4444' : '1px solid #e5e7eb',
-                  borderRadius: 6,
-                  fontSize: 14,
-                  outline: 'none',
-                }}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password')}
+                  style={{
+                    width: '100%',
+                    height: 40,
+                    padding: '0 42px 0 14px',
+                    border: errors.password ? '1px solid #ef4444' : '1px solid #e5e7eb',
+                    borderRadius: 6,
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: 10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#999',
+                  }}
+                >
+                  {showPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
               {errors.password && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 3 }}>{errors.password.message}</p>}
             </div>
 
             <div style={{ marginBottom: 12 }}>
               <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#4A5568', marginBottom: 5 }}>Repeat Password</label>
-              <input
-                type="password"
-                {...register('confirmPassword')}
-                style={{
-                  width: '100%',
-                  height: 40,
-                  padding: '0 14px',
-                  border: errors.confirmPassword ? '1px solid #ef4444' : '1px solid #e5e7eb',
-                  borderRadius: 6,
-                  fontSize: 14,
-                  outline: 'none',
-                }}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  {...register('confirmPassword')}
+                  style={{
+                    width: '100%',
+                    height: 40,
+                    padding: '0 42px 0 14px',
+                    border: errors.confirmPassword ? '1px solid #ef4444' : '1px solid #e5e7eb',
+                    borderRadius: 6,
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: 10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#999',
+                  }}
+                >
+                  {showConfirmPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 3 }}>{errors.confirmPassword.message}</p>}
             </div>
 
