@@ -48,4 +48,15 @@ export const friendService = {
     const response = await api.delete<ApiResponse>(`/friends/${friendId}`);
     if (!response.data.success) throw new Error(response.data.message || 'Failed');
   },
+
+  async getSentRequests(): Promise<FriendRequest[]> {
+    const response = await api.get<ApiResponse<{ requests: FriendRequest[] }>>('/friends/sent');
+    if (response.data.success && response.data.data) return response.data.data.requests;
+    return [];
+  },
+
+  async cancelRequest(requestId: string): Promise<void> {
+    const response = await api.delete<ApiResponse>(`/friends/cancel/${requestId}`);
+    if (!response.data.success) throw new Error(response.data.message || 'Failed');
+  },
 };

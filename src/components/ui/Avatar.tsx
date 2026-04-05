@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 
 interface AvatarProps {
   src?: string | null;
@@ -38,7 +37,6 @@ function stringToColor(str: string): string {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
   
-  // Generate a pleasant color
   const colors = [
     '#377DFF', '#41bfb8', '#f79952', '#10b981', '#8b5cf6',
     '#ec4899', '#f43f5e', '#06b6d4', '#84cc16', '#eab308'
@@ -58,12 +56,10 @@ export function Avatar({ src, name, size = 'md', className = '' }: AvatarProps) 
         className={`relative rounded-full overflow-hidden flex-shrink-0 ${className}`}
         style={{ width: pixelSize, height: pixelSize }}
       >
-        <Image
+        <img
           src={src}
           alt={name}
-          fill
-          className="object-cover"
-          sizes={`${pixelSize}px`}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
     );

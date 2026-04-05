@@ -35,6 +35,8 @@ export default function FeedPage() {
   const [sendingRequest, setSendingRequest] = useState<Set<string>>(new Set());
   const [viewingStory, setViewingStory] = useState<{ group: StoryGroup; index: number } | null>(null);
   const [storyUploading, setStoryUploading] = useState(false);
+  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
+  const [friendsTab, setFriendsTab] = useState<'requests' | 'sent' | 'friends' | 'suggestions'>('requests');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) router.push('/login');
@@ -53,11 +55,11 @@ export default function FeedPage() {
 
   const loadSidebar = useCallback(async () => {
     try {
-      const [sug, fri, req, stories] = await Promise.all([
+      const [sug, fri, req, sent, stories] = await Promise.all([
         friendService.getSuggestions(), friendService.getFriends(),
-        friendService.getPendingRequests(), storyService.getStories(),
+        friendService.getPendingRequests(), friendService.getSentRequests(), storyService.getStories(),
       ]);
-      setSuggestions(sug); setFriends(fri); setPendingRequests(req); setStoryGroups(stories);
+      setSuggestions(sug); setFriends(fri); setPendingRequests(req); setSentRequests(sent); setStoryGroups(stories);
     } catch { /* silent */ }
   }, []);
 
@@ -83,6 +85,11 @@ export default function FeedPage() {
 
   const handleRejectRequest = async (requestId: string) => {
     try { await friendService.rejectRequest(requestId); setPendingRequests((prev) => prev.filter((r) => r._id !== requestId)); }
+    catch (error: any) { toast.error(error.message || 'Failed'); }
+  };
+
+  const handleCancelRequest = async (requestId: string) => {
+    try { await friendService.cancelRequest(requestId); toast.success('Request cancelled'); setSentRequests((prev) => prev.filter((r) => r._id !== requestId)); loadSidebar(); }
     catch (error: any) { toast.error(error.message || 'Failed'); }
   };
 
@@ -130,32 +137,75 @@ export default function FeedPage() {
       );
     }
     if (activeView === 'friends') {
+      const tabStyle = (active: boolean) => ({
+        padding: '8px 20px', border: 'none', borderBottom: active ? '2px solid #1890FF' : '2px solid transparent',
+        background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: active ? 600 : 400,
+        color: active ? '#1890FF' : '#666',
+      });
       return (
         <div>
           <div className="_feed_inner_area _b_radious6 _padd_t24 _padd_b24 _padd_r24 _padd_l24 _mar_b16">
-            <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--color6)' }}>Find Friends</h3>
-            <button onClick={() => setActiveView('feed')} style={{ fontSize: 13, color: '#1890FF', cursor: 'pointer', background: 'none', border: 'none', marginTop: 4 }}>← Back to Feed</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--color6)' }}>Friends</h3>
+              <button onClick={() => setActiveView('feed')} style={{ fontSize: 13, color: '#1890FF', cursor: 'pointer', background: 'none', border: 'none' }}>← Back to Feed</button>
+            </div>
+            <div style={{ display: 'flex', gap: 4, marginTop: 16, borderBottom: '1px solid #f0f0f0' }}>
+              <button style={tabStyle(friendsTab === 'requests')} onClick={() => setFriendsTab('requests')}>Requests {pendingRequests.length > 0 && `(${pendingRequests.length})`}</button>
+              <button style={tabStyle(friendsTab === 'sent')} onClick={() => setFriendsTab('sent')}>Sent {sentRequests.length > 0 && `(${sentRequests.length})`}</button>
+              <button style={tabStyle(friendsTab === 'friends')} onClick={() => setFriendsTab('friends')}>Friends ({friends.length})</button>
+              <button style={tabStyle(friendsTab === 'suggestions')} onClick={() => setFriendsTab('suggestions')}>Suggestions</button>
+            </div>
           </div>
-          {pendingRequests.length > 0 && (
-            <div className="_feed_inner_area _b_radious6 _padd_t24 _padd_b24 _padd_r24 _padd_l24 _mar_b16">
-              <h4 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Friend Requests ({pendingRequests.length})</h4>
-              {pendingRequests.map((req) => (
+
+          <div className="_feed_inner_area _b_radious6 _padd_t24 _padd_b24 _padd_r24 _padd_l24">
+            {/* Received Requests */}
+            {friendsTab === 'requests' && (
+              pendingRequests.length === 0 ? <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>No pending requests</p> :
+              pendingRequests.map((req) => (
                 <div key={req._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <img src={(req.sender as any).avatar || '/assets/images/txt_img.png'} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-                    <div><p style={{ fontWeight: 600, fontSize: 14 }}>{(req.sender as any).firstName} {(req.sender as any).lastName}</p></div>
+                    <div><p style={{ fontWeight: 600, fontSize: 14 }}>{(req.sender as any).firstName} {(req.sender as any).lastName}</p><p style={{ fontSize: 12, color: '#999' }}>{(req.sender as any).email}</p></div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={() => handleAcceptRequest(req._id, (req.sender as any).firstName)} style={{ padding: '6px 16px', background: '#1890FF', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Accept</button>
                     <button onClick={() => handleRejectRequest(req._id)} style={{ padding: '6px 16px', background: '#f5f5f5', color: '#666', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reject</button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-          <div className="_feed_inner_area _b_radious6 _padd_t24 _padd_b24 _padd_r24 _padd_l24">
-            <h4 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>People You May Know</h4>
-            {suggestions.length === 0 ? <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>No suggestions available</p> :
+              ))
+            )}
+
+            {/* Sent Requests */}
+            {friendsTab === 'sent' && (
+              sentRequests.length === 0 ? <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>No sent requests</p> :
+              sentRequests.map((req) => (
+                <div key={req._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <img src={(req.receiver as any).avatar || '/assets/images/txt_img.png'} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
+                    <div><p style={{ fontWeight: 600, fontSize: 14 }}>{(req.receiver as any).firstName} {(req.receiver as any).lastName}</p><p style={{ fontSize: 12, color: '#999' }}>Pending</p></div>
+                  </div>
+                  <button onClick={() => handleCancelRequest(req._id)} style={{ padding: '6px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+                </div>
+              ))
+            )}
+
+            {/* My Friends */}
+            {friendsTab === 'friends' && (
+              friends.length === 0 ? <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>No friends yet</p> :
+              friends.map((friend) => (
+                <div key={friend._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <img src={friend.avatar || '/assets/images/txt_img.png'} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }} />
+                    <div><p style={{ fontWeight: 600, fontSize: 14 }}>{friend.firstName} {friend.lastName}</p><p style={{ fontSize: 12, color: '#999' }}>{friend.email}</p></div>
+                  </div>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#0ACF83' }}><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" viewBox="0 0 14 14"><rect width="12" height="12" x="1" y="1" fill="#0ACF83" stroke="#fff" strokeWidth="2" rx="6" /></svg> Friend</span>
+                </div>
+              ))
+            )}
+
+            {/* Suggestions */}
+            {friendsTab === 'suggestions' && (
+              suggestions.length === 0 ? <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>No suggestions available</p> :
               suggestions.map((person) => (
                 <div key={person._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -165,7 +215,7 @@ export default function FeedPage() {
                   <button onClick={() => handleSendRequest(person._id)} disabled={sendingRequest.has(person._id)} style={{ padding: '6px 20px', background: '#1890FF', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer', opacity: sendingRequest.has(person._id) ? 0.6 : 1 }}>{sendingRequest.has(person._id) ? '...' : 'Connect'}</button>
                 </div>
               ))
-            }
+            )}
           </div>
         </div>
       );
