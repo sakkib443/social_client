@@ -2,14 +2,20 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { friendService, type FriendRequest } from '@/lib/friends';
 
 export function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [showNotif, setShowNotif] = useState(false);
+  const [showMsg, setShowMsg] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
   const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLLIElement>(null);
+  const msgRef = useRef<HTMLLIElement>(null);
 
   const handleLogout = () => {
     logout();
@@ -17,15 +23,58 @@ export function Navbar() {
     setIsProfileOpen(false);
   };
 
+  const loadNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const reqs = await friendService.getPendingRequests();
+      setPendingRequests(reqs);
+    } catch { /* silent */ }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) setIsProfileOpen(false);
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) setShowNotif(false);
+      if (msgRef.current && !msgRef.current.contains(event.target as Node)) setShowMsg(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleAccept = async (reqId: string) => {
+    try {
+      await friendService.acceptRequest(reqId);
+      setPendingRequests((prev) => prev.filter((r) => r._id !== reqId));
+    } catch { /* */ }
+  };
+
+  const handleReject = async (reqId: string) => {
+    try {
+      await friendService.rejectRequest(reqId);
+      setPendingRequests((prev) => prev.filter((r) => r._id !== reqId));
+    } catch { /* */ }
+  };
+
+  // Floating dropdown styles
+  const floatingStyle: React.CSSProperties = {
+    position: 'absolute', right: 0, top: '100%', marginTop: 10,
+    background: '#fff', borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+    padding: 0, width: 340, zIndex: 999, maxHeight: 420, overflowY: 'auto',
+  };
+
+  const headerStyle: React.CSSProperties = {
+    padding: '14px 16px', borderBottom: '1px solid #f0f0f0',
+    fontSize: 16, fontWeight: 600, color: '#112032',
+  };
+
+  const itemStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 12,
+    padding: '10px 16px', borderBottom: '1px solid #f8f8f8',
+  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light _header_nav _padd_t10">
@@ -50,6 +99,7 @@ export function Navbar() {
 
           {/* Nav Icons */}
           <ul className="navbar-nav mb-2 mb-lg-0 _header_nav_list ms-auto _mar_r8">
+            {/* Home */}
             <li className="nav-item _header_nav_item">
               <Link className="nav-link _header_nav_link_active _header_nav_link" href="/feed">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="21" fill="none" viewBox="0 0 18 21">
@@ -58,30 +108,73 @@ export function Navbar() {
                 </svg>
               </Link>
             </li>
+
+            {/* Friends */}
             <li className="nav-item _header_nav_item">
-              <a className="nav-link _header_nav_link" href="#">
+              <a className="nav-link _header_nav_link" href="#" onClick={(e) => { e.preventDefault(); router.push('/feed'); }}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="26" height="20" fill="none" viewBox="0 0 26 20">
                   <path fill="#000" fillOpacity=".6" fillRule="evenodd" d="M12.79 12.15h.429c2.268.015 7.45.243 7.45 3.732 0 3.466-5.002 3.692-7.415 3.707h-.894c-2.268-.015-7.452-.243-7.452-3.727 0-3.47 5.184-3.697 7.452-3.711l.297-.001h.132zm0 1.75c-2.792 0-6.12.34-6.12 1.962 0 1.585 3.13 1.955 5.864 1.976l.255.002c2.792 0 6.118-.34 6.118-1.958 0-1.638-3.326-1.982-6.118-1.982z" clipRule="evenodd" />
                   <path fill="#000" fillOpacity=".6" fillRule="evenodd" d="M12.789 0c2.96 0 5.368 2.392 5.368 5.33 0 2.94-2.407 5.331-5.368 5.331h-.031a5.329 5.329 0 01-3.782-1.57 5.253 5.253 0 01-1.553-3.764C7.423 2.392 9.83 0 12.789 0zm0 1.75c-1.987 0-3.604 1.607-3.604 3.58a3.526 3.526 0 001.04 2.527 3.58 3.58 0 002.535 1.054l.03.875v-.875c1.987 0 3.605-1.605 3.605-3.58S14.777 1.75 12.789 1.75z" clipRule="evenodd" />
                 </svg>
               </a>
             </li>
-            <li className="nav-item _header_nav_item">
-              <span className="nav-link _header_nav_link _header_notify_btn" style={{ cursor: 'pointer' }}>
+
+            {/* Notification Bell */}
+            <li className="nav-item _header_nav_item" ref={notifRef} style={{ position: 'relative' }}>
+              <span className="nav-link _header_nav_link _header_notify_btn" style={{ cursor: 'pointer' }} onClick={() => { setShowNotif(!showNotif); setShowMsg(false); }}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" fill="none" viewBox="0 0 20 22">
                   <path fill="#000" fillOpacity=".6" fillRule="evenodd" d="M9.527 0c4.58 0 7.657 3.543 7.657 6.85 0 1.702.436 2.424.899 3.19.457.754.976 1.612.976 3.233-.36 4.14-4.713 4.478-9.531 4.478-4.818 0-9.172-.337-9.528-4.413-.003-1.686.515-2.544.973-3.299l.161-.27c.398-.679.737-1.417.737-2.918C1.871 3.543 4.948 0 9.528 0z" clipRule="evenodd" />
                 </svg>
-                <span className="_counting">6</span>
+                {pendingRequests.length > 0 && <span className="_counting">{pendingRequests.length}</span>}
               </span>
+
+              {/* Notification Floating Dropdown */}
+              {showNotif && (
+                <div style={floatingStyle}>
+                  <div style={headerStyle}>Notifications</div>
+                  {pendingRequests.length === 0 ? (
+                    <div style={{ padding: '30px 16px', textAlign: 'center', color: '#999', fontSize: 14 }}>
+                      No new notifications
+                    </div>
+                  ) : (
+                    pendingRequests.map((req) => (
+                      <div key={req._id} style={itemStyle}>
+                        <img src={(req.sender as any).avatar || '/assets/images/txt_img.png'} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{(req.sender as any).firstName} {(req.sender as any).lastName}</p>
+                          <p style={{ fontSize: 12, color: '#999', margin: '2px 0 6px' }}>sent you a friend request</p>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button onClick={() => handleAccept(req._id)} style={{ padding: '4px 14px', background: '#1890FF', color: '#fff', border: 'none', borderRadius: 4, fontSize: 12, cursor: 'pointer' }}>Accept</button>
+                            <button onClick={() => handleReject(req._id)} style={{ padding: '4px 14px', background: '#f5f5f5', color: '#666', border: '1px solid #e5e7eb', borderRadius: 4, fontSize: 12, cursor: 'pointer' }}>Reject</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </li>
-            <li className="nav-item _header_nav_item">
-              <a className="nav-link _header_nav_link" href="#">
+
+            {/* Message Icon */}
+            <li className="nav-item _header_nav_item" ref={msgRef} style={{ position: 'relative' }}>
+              <a className="nav-link _header_nav_link" href="#" onClick={(e) => { e.preventDefault(); setShowMsg(!showMsg); setShowNotif(false); }}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 22 22">
                   <path fill="#000" fillOpacity=".6" fillRule="evenodd" d="M11 0C4.925 0 0 4.925 0 11s4.925 11 11 11 11-4.925 11-11S17.075 0 11 0zM1.5 11a9.5 9.5 0 1119 0 9.5 9.5 0 01-19 0z" clipRule="evenodd" />
                   <path fill="#000" fillOpacity=".6" d="M15 11a1 1 0 11-2 0 1 1 0 012 0zM12 11a1 1 0 11-2 0 1 1 0 012 0zM9 11a1 1 0 11-2 0 1 1 0 012 0z" />
                 </svg>
-                <span className="_counting">7</span>
+                <span className="_counting">0</span>
               </a>
+
+              {/* Message Floating Dropdown */}
+              {showMsg && (
+                <div style={floatingStyle}>
+                  <div style={headerStyle}>Messages</div>
+                  <div style={{ padding: '30px 16px', textAlign: 'center', color: '#999', fontSize: 14 }}>
+                    <div style={{ fontSize: 40, marginBottom: 8 }}>💬</div>
+                    No messages yet
+                  </div>
+                </div>
+              )}
             </li>
           </ul>
 
@@ -104,16 +197,9 @@ export function Navbar() {
 
               {isProfileOpen && (
                 <div className="_header_profile_dropdown" style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: '100%',
-                  marginTop: 8,
-                  background: '#fff',
-                  borderRadius: 8,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-                  padding: '8px 0',
-                  width: 200,
-                  zIndex: 999,
+                  position: 'absolute', right: 0, top: '100%', marginTop: 8,
+                  background: '#fff', borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                  padding: '8px 0', width: 200, zIndex: 999,
                 }}>
                   <div style={{ padding: '10px 16px', borderBottom: '1px solid #f0f0f0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -127,16 +213,9 @@ export function Navbar() {
                   <button 
                     onClick={handleLogout}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      width: '100%',
-                      padding: '10px 16px',
-                      border: 'none',
-                      background: 'none',
-                      cursor: 'pointer',
-                      fontSize: 14,
-                      color: '#666',
+                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                      padding: '10px 16px', border: 'none', background: 'none',
+                      cursor: 'pointer', fontSize: 14, color: '#666',
                     }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1890FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
